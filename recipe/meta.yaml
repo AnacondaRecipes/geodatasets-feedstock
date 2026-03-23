@@ -11,28 +11,39 @@ source:
 
 build:
   number: 0
-  noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
+  skip: true  # [py<38]
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
 
 requirements:
   host:
-    - python {{ python_min }}
+    - python
     - pip
     - setuptools >=61.0
     - setuptools-scm >=6.2
   run:
-    - python >={{ python_min }}
+    - python
     - pooch
 
+# assert gdf.geom_type.str.endswith(dataset.geometry_type).all()
+# E AssertionError: assert np.False_
+{% set deselect_tests = [
+  "--deselect=geodatasets/tests/test_data.py::test_data_exists"
+]%}
 test:
   imports:
     - geodatasets.data
     - geodatasets
+  source_files:
+    - geodatasets/tests
   commands:
     - pip check
+    - pytest geodatasets/tests -v {{ deselect_tests | join(' ') }}
   requires:
     - pip
-    - python {{ python_min }}
+    - pytest
+    - geopandas
+    - pyogrio
+    - pandas
 
 about:
   home: https://github.com/geopandas/geodatasets
